@@ -193,6 +193,7 @@ static void Task_HandleMainMenuBPressed(u8);
 static void Task_NewGameBirchSpeech_Init(u8);
 static void Task_DisplayMainMenuInvalidActionError(u8);
 static void AddBirchSpeechObjects(u8);
+static u8 AddNewGameMalakObject(s16, s16, u8);
 static void Task_NewGameBirchSpeech_WaitToShowBirch(u8);
 static void NewGameBirchSpeech_StartFadeInTarget1OutTarget2(u8, u8);
 static void NewGameBirchSpeech_StartFadePlatformOut(u8, u8);
@@ -254,6 +255,56 @@ static const u16 sBirchSpeechBgPals[][16] = {
 static const u32 sBirchSpeechShadowGfx[] = INCBIN_U32("graphics/birch_speech/shadow.4bpp.smol");
 static const u32 sBirchSpeechBgMap[] = INCBIN_U32("graphics/birch_speech/map.bin.smolTM");
 static const u16 sBirchSpeechBgGradientPal[] = INCBIN_U16("graphics/birch_speech/bg2.gbapal");
+// `obj_frame_tiles` expects raw 4bpp tile data, not the compressed `.smol` variant.
+static const u32 sNewGameMalakGfx[] = INCBIN_U32("graphics/trainers/front_pics/Malak.4bpp");
+static const u16 sNewGameMalakPal[] = INCBIN_U16("graphics/trainers/front_pics/Malak.gbapal");
+
+static const struct OamData sOamData_NewGameMalak =
+{
+    .y = 0,
+    .affineMode = ST_OAM_AFFINE_OFF,
+    .objMode = ST_OAM_OBJ_NORMAL,
+    .bpp = ST_OAM_4BPP,
+    .shape = SPRITE_SHAPE(64x64),
+    .x = 0,
+    .size = SPRITE_SIZE(64x64),
+    .tileNum = 0,
+    .priority = 0,
+    .paletteNum = 0,
+};
+
+static const struct SpriteFrameImage sPicTable_NewGameMalak[] =
+{
+    obj_frame_tiles(sNewGameMalakGfx)
+};
+
+static const union AnimCmd sAnim_NewGameMalak[] =
+{
+    ANIMCMD_FRAME(0, 1),
+    ANIMCMD_END
+};
+
+static const union AnimCmd *const sAnimTable_NewGameMalak[] =
+{
+    sAnim_NewGameMalak
+};
+
+static const struct SpritePalette sSpritePalette_NewGameMalak =
+{
+    .data = sNewGameMalakPal,
+    .tag = 0x1200,
+};
+
+static const struct SpriteTemplate sSpriteTemplate_NewGameMalak =
+{
+    .tileTag = TAG_NONE,
+    .paletteTag = 0x1200,
+    .oam = &sOamData_NewGameMalak,
+    .anims = sAnimTable_NewGameMalak,
+    .images = sPicTable_NewGameMalak,
+    .affineAnims = gDummySpriteAffineAnimTable,
+    .callback = SpriteCallbackDummy,
+};
 
 static const u8 gText_SaveFileCorrupted[] = _("The save file is corrupted. The\nprevious save file will be loaded.");
 static const u8 gText_SaveFileErased[] = _("The save file has been erased\ndue to corruption or damage.");
@@ -1912,6 +1963,12 @@ static u8 NewGameBirchSpeech_CreateLotadSprite(u8 x, u8 y)
     return CreateMonPicSprite_Affine(SPECIES_LOTAD, FALSE, 0, MON_PIC_AFFINE_FRONT, x, y, 14, TAG_NONE);
 }
 
+static u8 AddNewGameMalakObject(s16 x, s16 y, u8 subpriority)
+{
+    LoadSpritePalette(&sSpritePalette_NewGameMalak);
+    return CreateSprite(&sSpriteTemplate_NewGameMalak, x, y, subpriority);
+}
+
 static void AddBirchSpeechObjects(u8 taskId)
 {
     u8 birchSpriteId;
@@ -1919,7 +1976,7 @@ static void AddBirchSpeechObjects(u8 taskId)
     u8 brendanSpriteId;
     u8 maySpriteId;
 
-    birchSpriteId = AddNewGameBirchObject(0x88, 0x3C, 1);
+    birchSpriteId = AddNewGameMalakObject(0x88, 0x3C, 1);
     gSprites[birchSpriteId].callback = SpriteCB_Null;
     gSprites[birchSpriteId].oam.priority = 0;
     gSprites[birchSpriteId].invisible = TRUE;
@@ -1929,7 +1986,7 @@ static void AddBirchSpeechObjects(u8 taskId)
     gSprites[lotadSpriteId].oam.priority = 0;
     gSprites[lotadSpriteId].invisible = TRUE;
     gTasks[taskId].tLotadSpriteId = lotadSpriteId;
-    brendanSpriteId = CreateTrainerSprite(FacilityClassToPicIndex(FACILITY_CLASS_BRENDAN), 120, 60, 0, NULL);
+    brendanSpriteId = AddNewGameMalakObject(120, 60, 0);
     gSprites[brendanSpriteId].callback = SpriteCB_Null;
     gSprites[brendanSpriteId].invisible = TRUE;
     gSprites[brendanSpriteId].oam.priority = 0;
